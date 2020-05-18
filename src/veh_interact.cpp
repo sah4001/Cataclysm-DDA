@@ -663,6 +663,15 @@ bool veh_interact::can_self_jack()
     return false;
 }
 
+static void print_message_to( catacurses::window &w_msg, const nc_color col,
+                              const std::string &msg )
+{
+    werase( w_msg );
+    // NOLINTNEXTLINE(cata-use-named-point-constants)
+    fold_and_print( w_msg, point( 1, 0 ), getmaxx( w_msg ) - 2, col, msg );
+    wrefresh( w_msg );
+}
+
 bool veh_interact::can_install_part()
 {
     if( sel_vpart_info == nullptr ) {
@@ -674,12 +683,11 @@ bool veh_interact::can_install_part()
     if( is_drive_conflict() ) {
         return false;
     }
-    if( sel_vpart_info->has_flag( "NO_INSTALL_PLAYER" ) ) {
-        werase( w_msg );
-        // NOLINTNEXTLINE(cata-use-named-point-constants)
-        fold_and_print( w_msg, point( 1, 0 ), getmaxx( w_msg ) - 2, c_light_red,
-                        _( "This part cannot be installed.\n" ) );
-        wrefresh( w_msg );
+    if( veh->has_part( "NO_MODIFY_VEHICLE" ) && !sel_vpart_info->has_flag( "SIMPLE_PART" ) ) {
+        print_message_to( w_msg, c_light_red, _( "This vehicle cannot be modified in this way.\n" ) );
+        return false;
+    } else if( sel_vpart_info->has_flag( "NO_INSTALL_PLAYER" ) ) {
+        print_message_to( w_msg, c_light_red, _( "This part cannot be installed.\n" ) );
         return false;
     }
 
@@ -687,11 +695,7 @@ bool veh_interact::can_install_part()
         if( std::none_of( parts_here.begin(), parts_here.end(), [&]( const int e ) {
         return veh->parts[e].is_tank();
         } ) ) {
-            werase( w_msg );
-            // NOLINTNEXTLINE(cata-use-named-point-constants)
-            fold_and_print( w_msg, point( 1, 0 ), getmaxx( w_msg ) - 2, c_light_red,
-                            _( "Funnels need to be installed over a tank." ) );
-            wrefresh( w_msg );
+            print_message_to( w_msg, c_light_red, _( "Funnels need to be installed over a tank." ) );
             return false;
         }
     }
@@ -700,11 +704,7 @@ bool veh_interact::can_install_part()
         if( std::any_of( parts_here.begin(), parts_here.end(), [&]( const int e ) {
         return veh->parts[e].is_turret();
         } ) ) {
-            werase( w_msg );
-            // NOLINTNEXTLINE(cata-use-named-point-constants)
-            fold_and_print( w_msg, point( 1, 0 ), getmaxx( w_msg ) - 2, c_light_red,
-                            _( "Can't install turret on another turret." ) );
-            wrefresh( w_msg );
+            print_message_to( w_msg, c_light_red, _( "Can't install turret on another turret." ) );
             return false;
         }
     }
@@ -811,10 +811,7 @@ bool veh_interact::can_install_part()
 
     sel_vpart_info->format_description( msg, c_light_gray, getmaxx( w_msg ) - 4 );
 
-    werase( w_msg );
-    // NOLINTNEXTLINE(cata-use-named-point-constants)
-    fold_and_print( w_msg, point( 1, 0 ), getmaxx( w_msg ) - 2, c_light_gray, msg );
-    wrefresh( w_msg );
+    print_message_to( w_msg, c_light_gray, msg );
     return ok || g->u.has_trait( trait_DEBUG_HS );
 }
 
@@ -1050,6 +1047,16 @@ bool veh_interact::do_install( std::string &msg )
                     default:
                         break;
                 }
+                // Modifying a vehicle with rotors will make in not flightworthy (until we've got a better model)
+                // It can only be the player doing this - an npc won't work well with query_yn
+                if( veh->would_prevent_flyable( *sel_vpart_info ) ) {
+                    if( query_yn(
+                            _( "Installing this part will mean that this vehicle is no longer flightworthy.  Continue?" ) ) ) {
+                        veh->set_flyable( false );
+                    } else {
+                        return false;
+                    }
+                }
                 if( veh->is_foldable() && !sel_vpart_info->has_flag( "FOLDABLE" ) &&
                     !query_yn( _( "Installing this part will make the vehicle unfoldable.  Continue?" ) ) ) {
                     return true;
@@ -1185,17 +1192,32 @@ bool veh_interact::do_repair( std::string &msg )
 
         std::string nmsg;
 
-        bool ok;
+        // this will always be set, but the gcc thinks that sometimes it won't be
+        bool ok = true;
         if( pt.is_broken() ) {
             ok = format_reqs( nmsg, vp.install_requirements(), vp.install_skills, vp.install_time( g->u ) );
         } else {
-            if( !vp.has_flag( "NO_REPAIR" ) && !vp.repair_requirements().is_empty() &&
-                pt.base.max_damage() > 0 ) {
-                ok = format_reqs( nmsg, vp.repair_requirements() * pt.base.damage_level( 4 ), vp.repair_skills,
-                                  vp.repair_time( g->u ) * pt.base.damage() / pt.base.max_damage() );
-            } else {
+            if( vp.has_flag( "NO_REPAIR" ) || vp.repair_requirements().is_empty() ||
+                pt.base.max_damage() <= 0 ) {
                 nmsg += colorize( _( "This part cannot be repaired.\n" ), c_light_red );
                 ok = false;
+            } else if( veh->has_part( "NO_MODIFY_VEHICLE" ) && !vp.has_flag( "SIMPLE_PART" ) ) {
+                nmsg += colorize( _( "This vehicle cannot be repaired.\n" ), c_light_red );
+                ok = false;
+            } else if( veh->would_prevent_flyable( vp ) ) {
+                // Modifying a vehicle with rotors will make in not flightworthy (until we've got a better model)
+                // It can only be the player doing this - an npc won't work well with query_yn
+                if( query_yn(
+                        _( "Repairing this part will mean that this vehicle is no longer flightworthy.  Continue?" ) ) ) {
+                    veh->set_flyable( false );
+                } else {
+                    nmsg += colorize( _( "You chose not to install this part to keep the vehicle flyable.\n" ),
+                                      c_light_red );
+                    ok = false;
+                }
+            } else {
+                ok = format_reqs( nmsg, vp.repair_requirements() * pt.base.damage_level( 4 ), vp.repair_skills,
+                                  vp.repair_time( g->u ) * pt.base.damage() / pt.base.max_damage() );
             }
         }
 
@@ -1728,12 +1750,11 @@ bool veh_interact::can_remove_part( int idx, const player &p )
     sel_vpart_info = &sel_vehicle_part->info();
     std::string msg;
 
-    if( sel_vpart_info->has_flag( "NO_UNINSTALL" ) ) {
-        werase( w_msg );
-        // NOLINTNEXTLINE(cata-use-named-point-constants)
-        fold_and_print( w_msg, point( 1, 0 ), getmaxx( w_msg ) - 2, c_light_red,
-                        _( "This part cannot be uninstalled.\n" ) );
-        wrefresh( w_msg );
+    if( veh->has_part( "NO_MODIFY_VEHICLE" ) && !sel_vpart_info->has_flag( "SIMPLE_PART" ) ) {
+        print_message_to( w_msg, c_light_red, _( "This vehicle cannot be modified in this way.\n" ) );
+        return false;
+    } else if( sel_vpart_info->has_flag( "NO_UNINSTALL" ) ) {
+        print_message_to( w_msg, c_light_red, _( "This part cannot be uninstalled.\n" ) );
         return false;
     }
 
@@ -1804,10 +1825,7 @@ bool veh_interact::can_remove_part( int idx, const player &p )
     const nc_color desc_color = sel_vehicle_part->is_broken() ? c_dark_gray : c_light_gray;
     sel_vehicle_part->info().format_description( msg, desc_color, getmaxx( w_msg ) - 4 );
 
-    werase( w_msg );
-    // NOLINTNEXTLINE(cata-use-named-point-constants)
-    fold_and_print( w_msg, point( 1, 0 ), getmaxx( w_msg ) - 2, c_light_gray, msg );
-    wrefresh( w_msg );
+    print_message_to( w_msg, c_light_gray, msg );
     return ok || g->u.has_trait( trait_DEBUG_HS );
 }
 
@@ -1865,6 +1883,17 @@ bool veh_interact::do_remove( std::string &msg )
                     return false;
                 default:
                     break;
+            }
+
+            // Modifying a vehicle with rotors will make in not flightworthy (until we've got a better model)
+            // It can only be the player doing this - an npc won't work well with query_yn
+            if( veh->would_prevent_flyable( veh->parts[part].info() ) ) {
+                if( query_yn(
+                        _( "Removing this part will mean that this vehicle is no longer flightworthy.  Continue?" ) ) ) {
+                    veh->set_flyable( false );
+                } else {
+                    return false;
+                }
             }
             const std::vector<npc *> helpers = g->u.get_crafting_helpers();
             for( const npc *np : helpers ) {

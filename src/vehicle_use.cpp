@@ -177,7 +177,7 @@ void vehicle::control_doors()
     pointmenu_cb callback( locations );
     pmenu.callback = &callback;
     // Move the menu so that we can see our vehicle
-    pmenu.w_y = 0;
+    pmenu.w_y_setup = 0;
     pmenu.query();
 
     if( pmenu.ret >= 0 ) {
@@ -2071,7 +2071,9 @@ void vehicle::interact_with( const tripoint &pos, int interact_part )
         }
         case DRINK: {
             item water( "water_clean", 0 );
-            if( g->u.eat( water ) ) {
+            if( g->u.can_consume( water ) ) {
+                //I tried to convert this the to use the consume activity but couldn't get the transformation of this item into an item location quite right
+                g->u.consume( water );
                 drain( "water_clean", 1 );
                 g->u.moves -= 250;
             }
@@ -2120,7 +2122,8 @@ void vehicle::interact_with( const tripoint &pos, int interact_part )
             return;
         }
         case UNLOAD_TURRET: {
-            g->unload( *turret.base() );
+            item_location loc = turret.base();
+            g->unload( loc );
             return;
         }
         case RELOAD_TURRET: {

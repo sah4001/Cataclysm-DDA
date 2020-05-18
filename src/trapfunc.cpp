@@ -375,7 +375,7 @@ bool trapfunc::crossbow( const tripoint &p, Creature *c, item * )
                         break;
                 }
                 //~ %s is bodypart
-                n->add_msg_if_player( m_bad, _( "Your %s is hit!" ), body_part_name( hit->token ) );
+                n->add_msg_if_player( m_bad, _( "Your %s is hit!" ), body_part_name( hit ) );
                 c->deal_damage( nullptr, hit, damage_instance( DT_CUT, rng( 20, 30 ) ) );
                 add_bolt = !one_in( 10 );
             } else {
@@ -475,7 +475,7 @@ bool trapfunc::shotgun( const tripoint &p, Creature *c, item * )
                         break;
                 }
                 //~ %s is bodypart
-                n->add_msg_if_player( m_bad, _( "Your %s is hit!" ), body_part_name( hit->token ) );
+                n->add_msg_if_player( m_bad, _( "Your %s is hit!" ), body_part_name( hit ) );
                 c->deal_damage( nullptr, hit, damage_instance( DT_BULLET, rng( 40 * shots, 60 * shots ) ) );
             } else {
                 n->add_msg_player_or_npc( m_neutral, _( "You dodge the shot!" ),
@@ -529,7 +529,7 @@ bool trapfunc::blade( const tripoint &, Creature *c, item * )
         add_msg( m_bad, _( "A blade swings out and hacks your %s!" ), c->get_name() );
     }
     c->add_msg_player_or_npc( m_bad, _( "A blade swings out and hacks your torso!" ),
-                              _( "A blade swings out and hacks <npcname>s torso!" ) );
+                              _( "A blade swings out and hacks <npcname>'s torso!" ) );
     damage_instance d;
     d.add_damage( DT_BASH, 12 );
     d.add_damage( DT_CUT, 30 );
@@ -578,7 +578,7 @@ bool trapfunc::snare_heavy( const tripoint &p, Creature *c, item * )
     }
     //~ %s is bodypart name in accusative.
     c->add_msg_player_or_npc( m_bad, _( "A snare closes on your %s." ),
-                              _( "A snare closes on <npcname>s %s." ), body_part_name_accusative( hit->token ) );
+                              _( "A snare closes on <npcname>s %s." ), body_part_name_accusative( hit ) );
 
     // Actual effects
     c->add_effect( effect_heavysnare, 1_turns, hit->token, true );
@@ -848,7 +848,7 @@ bool trapfunc::pit_spikes( const tripoint &p, Creature *c, item * )
                     break;
             }
             n->add_msg_if_player( m_bad, _( "The spikes impale your %s!" ),
-                                  body_part_name_accusative( hit->token ) );
+                                  body_part_name_accusative( hit ) );
             n->deal_damage( nullptr, hit, damage_instance( DT_CUT, damage ) );
             if( ( n->has_trait( trait_INFRESIST ) ) && ( one_in( 256 ) ) ) {
                 n->add_effect( effect_tetanus, 1_turns, num_bp, true );
@@ -935,7 +935,7 @@ bool trapfunc::pit_glass( const tripoint &p, Creature *c, item * )
                     break;
             }
             n->add_msg_if_player( m_bad, _( "The glass shards slash your %s!" ),
-                                  body_part_name_accusative( hit->token ) );
+                                  body_part_name_accusative( hit ) );
             n->deal_damage( nullptr, hit, damage_instance( DT_CUT, damage ) );
             if( ( n->has_trait( trait_INFRESIST ) ) && ( one_in( 256 ) ) ) {
                 n->add_effect( effect_tetanus, 1_turns, num_bp, true );

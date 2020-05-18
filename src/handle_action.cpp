@@ -474,13 +474,19 @@ static void pldrive( const tripoint &p )
             return;
         }
     }
-    if( p.z != 0 && !u.has_trait( trait_PROF_HELI_PILOT ) ) {
-        u.add_msg_if_player( m_info, _( "You have no idea how to make the vehicle fly." ) );
-        return;
-    }
-    if( p.z != 0 && !g->m.has_zlevels() ) {
-        u.add_msg_if_player( m_info, _( "This vehicle doesn't look very airworthy." ) );
-        return;
+    if( p.z != 0 ) {
+        if( !u.has_trait( trait_PROF_HELI_PILOT ) ) {
+            u.add_msg_if_player( m_info, _( "You have no idea how to make the vehicle fly." ) );
+            return;
+        }
+        if( !veh->is_flyable() ) {
+            u.add_msg_if_player( m_info, _( "This vehicle doesn't look very airworthy." ) );
+            return;
+        }
+        if( !g->m.has_zlevels() ) {
+            u.add_msg_if_player( m_info, _( "This vehicle cannot be flown without z levels." ) );
+            return;
+        }
     }
     if( p.z == -1 ) {
         if( veh->check_heli_descend( u ) ) {
@@ -784,9 +790,10 @@ static void smash()
         if( !mech_smash ) {
             u.increase_activity_level( MODERATE_EXERCISE );
             u.handle_melee_wear( u.weapon );
-            const int mod_sta = ( ( u.weapon.weight() / 10_gram ) + 200 + static_cast<int>
-                                  ( get_option<float>( "PLAYER_BASE_STAMINA_REGEN_RATE" ) ) ) * -1;
+
+            const int mod_sta = 2 * u.get_standard_stamina_cost();
             u.mod_stamina( mod_sta );
+
             if( u.get_skill_level( skill_melee ) == 0 ) {
                 u.practice( skill_melee, rng( 0, 1 ) * rng( 0, 1 ) );
             }

@@ -302,7 +302,7 @@ class player : public Character
          * @param dam: Type of damage to check for
          * @returns true if given damage can not reduce hp of given body part
          */
-        bool immune_to( body_part bp, damage_unit dam ) const;
+        bool immune_to( const bodypart_id &bp, damage_unit dam ) const;
         /** Modifies a pain value by player traits before passing it to Creature::mod_pain() */
         void mod_pain( int npain ) override;
         /** Sets new intensity of pain an reacts to it */
@@ -310,7 +310,7 @@ class player : public Character
         /** Returns perceived pain (reduced with painkillers)*/
         int get_perceived_pain() const override;
 
-        void add_pain_msg( int val, body_part bp ) const;
+        void add_pain_msg( int val, const bodypart_id &bp ) const;
 
         /** Knocks the player to a specified tile */
         void knock_back_to( const tripoint &to ) override;
@@ -333,16 +333,12 @@ class player : public Character
          */
         void siphon( vehicle &veh, const itype_id &desired_liquid );
 
-        /** used for drinking from hands, returns how many charges were consumed */
-        int drink_from_hands( item &water );
         /** Used for eating object at pos, returns true if object is removed from inventory (last charge was consumed) */
         bool consume( item_location loc );
         /** Used for eating a particular item that doesn't need to be in inventory.
          *  Returns true if the item is to be removed (doesn't remove). */
-        bool consume_item( item &target );
+        bool consume( item &target );
 
-        /** Used for eating entered comestible, returns true if comestible is successfully eaten */
-        bool eat( item &food, bool force = false );
         /** Handles the enjoyability value for a book. **/
         int book_fun_for( const item &book, const player &p ) const;
 
@@ -433,7 +429,7 @@ class player : public Character
           */
         bool add_or_drop_with_msg( item &it, bool unloading = false, const item *avoid = nullptr );
 
-        bool unload( item &it );
+        bool unload( item_location &loc );
 
         /**
          * Try to wield a contained item consuming moves proportional to weapon skill and volume.
@@ -785,15 +781,6 @@ class player : public Character
 
         /** Processes human-specific effects of an effect. */
         void process_one_effect( effect &it, bool is_new ) override;
-
-    private:
-
-        /**
-         * Consumes an item as medication.
-         * @param target Item consumed. Must be a medication or a container of medication.
-         * @return Whether the target was fully consumed.
-         */
-        bool consume_med( item &target );
 
     private:
 

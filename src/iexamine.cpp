@@ -98,6 +98,7 @@ static const activity_id ACT_BUILD( "ACT_BUILD" );
 static const activity_id ACT_CLEAR_RUBBLE( "ACT_CLEAR_RUBBLE" );
 static const activity_id ACT_CRACKING( "ACT_CRACKING" );
 static const activity_id ACT_FORAGE( "ACT_FORAGE" );
+static const activity_id ACT_OPERATION( "ACT_OPERATION" );
 static const activity_id ACT_PLANT_SEED( "ACT_PLANT_SEED" );
 
 static const efftype_id effect_earphones( "earphones" );
@@ -138,8 +139,10 @@ static const trait_id trait_THRESH_MYCUS( "THRESH_MYCUS" );
 static const quality_id qual_ANESTHESIA( "ANESTHESIA" );
 static const quality_id qual_DIG( "DIG" );
 
+static const mtype_id mon_broken_cyborg( "mon_broken_cyborg" );
 static const mtype_id mon_dark_wyrm( "mon_dark_wyrm" );
 static const mtype_id mon_fungal_blossom( "mon_fungal_blossom" );
+static const mtype_id mon_prototype_cyborg( "mon_prototype_cyborg" );
 static const mtype_id mon_spider_cellar_giant_s( "mon_spider_cellar_giant_s" );
 static const mtype_id mon_spider_web_s( "mon_spider_web_s" );
 static const mtype_id mon_spider_widow_giant_s( "mon_spider_widow_giant_s" );
@@ -1030,10 +1033,12 @@ void iexamine::chainfence( player &p, const tripoint &examp )
     } else if( g->m.has_flag( flag_CLIMB_SIMPLE, examp ) ) {
         add_msg( _( "You vault over the obstacle." ) );
         p.moves -= 300; // Most common move cost for barricades pre-change.
-    } else if( p.has_trait( trait_ARACHNID_ARMS_OK ) && !p.wearing_something_on( bp_torso ) ) {
+    } else if( p.has_trait( trait_ARACHNID_ARMS_OK ) &&
+               !p.wearing_something_on( bodypart_id( "torso" ) ) ) {
         add_msg( _( "Climbing this obstacle is trivial for one such as you." ) );
         p.moves -= 75; // Yes, faster than walking.  6-8 limbs are impressive.
-    } else if( p.has_trait( trait_INSECT_ARMS_OK ) && !p.wearing_something_on( bp_torso ) ) {
+    } else if( p.has_trait( trait_INSECT_ARMS_OK ) &&
+               !p.wearing_something_on( bodypart_id( "torso" ) ) ) {
         add_msg( _( "You quickly scale the fence." ) );
         p.moves -= 90;
     } else if( p.has_trait( trait_PARKOUR ) ) {
@@ -1345,9 +1350,8 @@ void iexamine::locked_object( player &p, const tripoint &examp )
 
     // if crowbar() ever eats charges or otherwise alters the passed item, rewrite this to reflect
     // changes to the original item.
-    iuse dummy;
     item temporary_item( prying_items[0]->type );
-    dummy.crowbar( &p, &temporary_item, false, examp );
+    iuse::crowbar( &p, &temporary_item, false, examp );
 }
 
 /**
@@ -1598,7 +1602,7 @@ static bool can_drink_nectar( const player &p )
 {
     return ( p.has_active_mutation( trait_PROBOSCIS )  ||
              p.has_active_mutation( trait_BEAK_HUM ) ) &&
-           ( ( p.get_hunger() ) > 0 ) && ( !( p.wearing_something_on( bp_mouth ) ) );
+           ( ( p.get_hunger() ) > 0 ) && ( !( p.wearing_something_on( bodypart_id( "mouth" ) ) ) );
 }
 
 /**
@@ -1610,7 +1614,8 @@ static bool drink_nectar( player &p )
         p.moves -= to_moves<int>( 30_seconds );
         add_msg( _( "You drink some nectar." ) );
         item nectar( "nectar", calendar::turn, 1 );
-        p.eat( nectar );
+        p.consume( nectar );
+        //I tried to convert this the to use the consume activity but couldn't get the transformation of this item into an item location quite right
         return true;
     }
 
@@ -1654,7 +1659,8 @@ void iexamine::flower_poppy( player &p, const tripoint &examp )
         p.moves -= to_moves<int>( 30_seconds ); // You take your time...
         add_msg( _( "You slowly suck up the nectar." ) );
         item poppy( "poppy_nectar", calendar::turn, 1 );
-        p.eat( poppy );
+        p.consume( poppy );
+        //I tried to convert this the to use the consume activity but couldn't get the transformation of this item into an item location quite right
         p.mod_fatigue( 20 );
         p.add_effect( effect_pkill2, 7_minutes );
         // Please drink poppy nectar responsibly.
@@ -2154,7 +2160,7 @@ void iexamine::harvest_plant( player &p, const tripoint &examp, bool from_activi
         ///\EFFECT_SURVIVAL increases number of plants harvested from a seed
         int plant_count = rng( skillLevel / 2, skillLevel );
         plant_count *= g->m.furn( examp )->plant->harvest_multiplier;
-        const int max_harvest_count = get_option<int>( "MAX_HARVEST_COUNT" );
+        const int max_harvest_count = 12;
         if( plant_count >= max_harvest_count ) {
             plant_count = max_harvest_count;
         } else if( plant_count <= 0 ) {
@@ -3129,7 +3135,8 @@ void iexamine::keg( player &p, const tripoint &examp )
                 return;
 
             case HAVE_A_DRINK:
-                if( !p.eat( drink ) ) {
+                if( !p.consume( drink ) ) {
+                    //I tried to convert this the to use the consume activity but couldn't get the transformation of this item into an item location quite right
                     return; // They didn't actually drink
                 }
 
@@ -3138,7 +3145,6 @@ void iexamine::keg( player &p, const tripoint &examp )
                              drink_tname, keg_name );
                     g->m.i_clear( examp );
                 }
-                p.moves -= to_moves<int>( 5_seconds );
                 return;
 
             case REFILL: {
@@ -4348,7 +4354,7 @@ static item &cyborg_on_couch( const tripoint &couch_pos, item &null_cyborg )
             return it;
         }
         if( it.typeId() == "corpse" ) {
-            if( it.get_mtype()->id == "mon_broken_cyborg" || it.get_mtype()->id == "mon_prototype_cyborg" ) {
+            if( it.get_mtype()->id == mon_broken_cyborg || it.get_mtype()->id == mon_prototype_cyborg ) {
                 return it;
             }
         }
@@ -4358,38 +4364,31 @@ static item &cyborg_on_couch( const tripoint &couch_pos, item &null_cyborg )
 
 static player &best_installer( player &p, player &null_player, int difficulty )
 {
-    float player_skill = p.bionics_adjusted_skill( skill_firstaid,
-                         skill_computer,
-                         skill_electronics );
-
-    std::vector< std::pair<float, int>> ally_skills;
-    ally_skills.reserve( g->allies().size() );
+    std::vector< std::pair<int, int>> ally_chances;
+    ally_chances.reserve( g->allies().size() );
     for( size_t i = 0; i < g->allies().size() ; i ++ ) {
-        std::pair<float, int> ally_skill;
+        std::pair<int, int> ally_skill;
         const npc *e = g->allies()[ i ];
 
         player &ally = *g->critter_by_id<player>( e->getID() );
         ally_skill.second = i;
-        ally_skill.first = ally.bionics_adjusted_skill( skill_firstaid,
-                           skill_computer,
-                           skill_electronics );
-        ally_skills.push_back( ally_skill );
+        ally_skill.first = bionic_success_chance( true, -1, difficulty, ally );
+        ally_chances.push_back( ally_skill );
     }
-    std::sort( ally_skills.begin(), ally_skills.end(), [&]( const std::pair<float, int> &lhs,
-    const std::pair<float, int> &rhs ) {
+    std::sort( ally_chances.begin(), ally_chances.end(), [&]( const std::pair<int, int> &lhs,
+    const std::pair<int, int> &rhs ) {
         return rhs.first < lhs.first;
     } );
-    int player_cos = bionic_manip_cos( player_skill, difficulty );
+    int player_cos = bionic_success_chance( true, -1, difficulty, p );
     for( size_t i = 0; i < g->allies().size() ; i ++ ) {
-        if( ally_skills[ i ].first > player_skill ) {
-            const npc *e = g->allies()[ ally_skills[ i ].second ];
+        if( ally_chances[ i ].first > player_cos ) {
+            const npc *e = g->allies()[ ally_chances[ i ].second ];
             player &ally = *g->critter_by_id<player>( e->getID() );
-            int ally_cos = bionic_manip_cos( ally_skills[ i ].first, difficulty );
             if( e->has_effect( effect_sleep ) ) {
                 if( !g->u.query_yn(
                         //~ %1$s is the name of the ally
                         _( "<color_white>%1$s is asleep, but has a <color_green>%2$d<color_white> chance of success compared to your <color_red>%3$d<color_white> chance of success.  Continue with a higher risk of failure?</color>" ),
-                        ally.disp_name(), ally_cos, player_cos ) ) {
+                        ally.disp_name(), ally_chances[i].first, player_cos ) ) {
                     return null_player;
                 } else {
                     continue;
@@ -4397,7 +4396,7 @@ static player &best_installer( player &p, player &null_player, int difficulty )
             }
             //~ %1$s is the name of the ally
             add_msg( _( "%1$s will perform the operation with a %2$d chance of success." ), ally.disp_name(),
-                     ally_cos );
+                     ally_chances[i].first );
             return ally;
         } else {
             break;
@@ -4483,7 +4482,7 @@ void iexamine::autodoc( player &p, const tripoint &examp )
             popup( _( "No patient found located on the connected couches.  Operation impossible.  Exiting." ) );
             return;
         }
-    } else if( patient.activity.id() == "ACT_OPERATION" ) {
+    } else if( patient.activity.id() == ACT_OPERATION ) {
         popup( _( "Operation underway.  Please wait until the end of the current procedure.  Estimated time remaining: %s." ),
                to_string( time_duration::from_turns( patient.activity.moves_left / 100 ) ) );
         p.add_msg_if_player( m_info, _( "The autodoc is working on %s." ), patient.disp_name() );
@@ -4631,8 +4630,8 @@ void iexamine::autodoc( player &p, const tripoint &examp )
             int broken_limbs_count = 0;
             for( int i = 0; i < num_hp_parts; i++ ) {
                 const bool broken = patient.is_limb_broken( static_cast<hp_part>( i ) );
-                body_part part = player::hp_to_bp( static_cast<hp_part>( i ) );
-                effect &existing_effect = patient.get_effect( effect_mending, part );
+                const bodypart_id &part = convert_bp( player::hp_to_bp( static_cast<hp_part>( i ) ) ).id();
+                effect &existing_effect = patient.get_effect( effect_mending, part->token );
                 // Skip part if not broken or already healed 50%
                 if( !broken || ( !existing_effect.is_null() &&
                                  existing_effect.get_duration() >
@@ -4656,8 +4655,8 @@ void iexamine::autodoc( player &p, const tripoint &examp )
                     cata::optional<std::list<item>::iterator> worn_item =
                         patient.wear( equipped_splint, false );
                 }
-                patient.add_effect( effect_mending, 0_turns, part, true );
-                effect &mending_effect = patient.get_effect( effect_mending, part );
+                patient.add_effect( effect_mending, 0_turns, part->token, true );
+                effect &mending_effect = patient.get_effect( effect_mending, part->token );
                 mending_effect.set_duration( mending_effect.get_max_duration() - 5_days );
             }
             if( broken_limbs_count == 0 ) {

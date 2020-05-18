@@ -88,7 +88,7 @@ struct bionic_data {
     /**
      * Body part slots used to install this bionic, mapped to the amount of space required.
      */
-    std::map<body_part, size_t> occupied_bodyparts;
+    std::map<bodypart_str_id, size_t> occupied_bodyparts;
     /**
      * Body part encumbered by this bionic, mapped to the amount of encumbrance caused.
      */
@@ -125,6 +125,9 @@ struct bionic_data {
      * Upgrades available for this bionic (opposite to @ref upgraded_bionic).
      */
     std::set<bionic_id> available_upgrades;
+
+    /**Requirement to bionic installation*/
+    requirement_id installation_requirement;
 
     cata::flat_set<std::string> flags;
     bool has_flag( const std::string &flag ) const;
@@ -188,7 +191,7 @@ class bionic_collection : public std::vector<bionic>
 };
 
 /**List of bodyparts occupied by a bionic*/
-std::vector<body_part> get_occupied_bodyparts( const bionic_id &bid );
+std::vector<bodypart_id> get_occupied_bodyparts( const bionic_id &bid );
 
 void reset_bionics();
 
@@ -196,6 +199,7 @@ char get_free_invlet( player &p );
 std::string list_occupied_bps( const bionic_id &bio_id, const std::string &intro,
                                bool each_bp_on_new_line = true );
 
+int bionic_success_chance( bool autodoc, int skill_level, int difficulty, const Character &target );
 int bionic_manip_cos( float adjusted_skill, int bionic_difficulty );
 
 std::vector<bionic_id> bionics_cancelling_trait( const std::vector<bionic_id> &bios,
