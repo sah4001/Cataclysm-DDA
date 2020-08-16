@@ -1,5 +1,24 @@
 [
   {
+    "id": "bp_null",
+    "type": "body_part",
+    "name": "appendix",
+    "accusative": { "ctxt": "bodypart_accusative", "str": "appendix" },
+    "heading": "appendix",
+    "heading_multiple": "Appendices",
+    "encumbrance_text": "It's inflamed.",
+    "main_part": "bp_null",
+    "connected_to": "bp_null",
+    "opposite_part": "bp_null",
+    "hit_size": 0,
+    "hit_size_relative": [ 0, 0, 0 ],
+    "hit_difficulty": 0,
+    "side": "both",
+    "base_hp": 60,
+    "drench_capacity": 1,
+    "legacy_id": "NUM_BP"
+  },
+  {
     "id": "torso",
     "type": "body_part",
     "name": "torso",
@@ -9,6 +28,7 @@
     "hp_bar_ui_text": "TORSO",
     "encumbrance_text": "Dodging and melee is hampered.",
     "main_part": "torso",
+    "connected_to": "head",
     "opposite_part": "torso",
     "hit_size": 45,
     "hit_size_relative": [ 20, 33.33, 36.57 ],
@@ -19,6 +39,8 @@
     "hot_morale_mod": 2,
     "cold_morale_mod": 2,
     "squeamish_penalty": 6,
+    "base_hp": 60,
+    "drench_capacity": 40,
     "bionic_slots": 80
   },
   {
@@ -31,6 +53,7 @@
     "hp_bar_ui_text": "HEAD",
     "encumbrance_text": "",
     "main_part": "head",
+    "connected_to": "head",
     "opposite_part": "head",
     "hit_size": 6,
     "hit_size_relative": [ 0, 2.33, 5.71 ],
@@ -41,6 +64,8 @@
     "hot_morale_mod": 2,
     "cold_morale_mod": 2,
     "squeamish_penalty": 7,
+    "base_hp": 60,
+    "drench_capacity": 7,
     "bionic_slots": 18
   },
   {
@@ -60,6 +85,8 @@
     "legacy_id": "EYES",
     "stylish_bonus": 2,
     "squeamish_penalty": 8,
+    "base_hp": 60,
+    "drench_capacity": 1,
     "bionic_slots": 4
   },
   {
@@ -81,6 +108,8 @@
     "hot_morale_mod": 2,
     "cold_morale_mod": 2,
     "squeamish_penalty": 9,
+    "base_hp": 60,
+    "drench_capacity": 1,
     "bionic_slots": 4
   },
   {
@@ -96,6 +125,7 @@
     "encumbrance_text": "Melee and ranged combat is hampered.",
     "hp_bar_ui_text": "L ARM",
     "main_part": "arm_l",
+    "connected_to": "torso",
     "opposite_part": "arm_r",
     "hit_size": 9,
     "hit_size_relative": [ 15, 20, 22.86 ],
@@ -105,6 +135,9 @@
     "hot_morale_mod": 0.5,
     "cold_morale_mod": 0.5,
     "squeamish_penalty": 5,
+    "is_limb": true,
+    "base_hp": 60,
+    "drench_capacity": 10,
     "bionic_slots": 20
   },
   {
@@ -119,6 +152,7 @@
     "hp_bar_ui_text": "R ARM",
     "encumbrance_text": "Melee and ranged combat is hampered.",
     "main_part": "arm_r",
+    "connected_to": "torso",
     "opposite_part": "arm_l",
     "hit_size": 9,
     "hit_size_relative": [ 15, 20, 22.86 ],
@@ -128,6 +162,9 @@
     "hot_morale_mod": 0.5,
     "cold_morale_mod": 0.5,
     "squeamish_penalty": 5,
+    "is_limb": true,
+    "base_hp": 60,
+    "drench_capacity": 10,
     "bionic_slots": 20
   },
   {
@@ -151,6 +188,8 @@
     "hot_morale_mod": 0.5,
     "cold_morale_mod": 0.5,
     "squeamish_penalty": 3,
+    "base_hp": 60,
+    "drench_capacity": 3,
     "bionic_slots": 5
   },
   {
@@ -174,6 +213,8 @@
     "hot_morale_mod": 0.5,
     "cold_morale_mod": 0.5,
     "squeamish_penalty": 3,
+    "base_hp": 60,
+    "drench_capacity": 3,
     "bionic_slots": 5
   },
   {
@@ -188,6 +229,7 @@
     "hp_bar_ui_text": "L LEG",
     "encumbrance_text": "Running and swimming are slowed.",
     "main_part": "leg_l",
+    "connected_to": "torso",
     "opposite_part": "leg_r",
     "hit_size": 9,
     "hit_size_relative": [ 25, 12, 5.71 ],
@@ -198,6 +240,9 @@
     "hot_morale_mod": 0.5,
     "cold_morale_mod": 0.5,
     "squeamish_penalty": 5,
+    "is_limb": true,
+    "base_hp": 60,
+    "drench_capacity": 11,
     "bionic_slots": 30
   },
   {
@@ -212,6 +257,7 @@
     "hp_bar_ui_text": "R LEG",
     "encumbrance_text": "Running and swimming are slowed.",
     "main_part": "leg_r",
+    "connected_to": "torso",
     "opposite_part": "leg_l",
     "hit_size": 9,
     "hit_size_relative": [ 25, 12, 5.71 ],
@@ -222,6 +268,9 @@
     "hot_morale_mod": 0.5,
     "cold_morale_mod": 0.5,
     "squeamish_penalty": 5,
+    "is_limb": true,
+    "base_hp": 60,
+    "drench_capacity": 11,
     "bionic_slots": 30
   },
   {
@@ -245,6 +294,8 @@
     "hot_morale_mod": 0.5,
     "cold_morale_mod": 0.5,
     "squeamish_penalty": 3,
+    "base_hp": 60,
+    "drench_capacity": 3,
     "bionic_slots": 7
   },
   {
@@ -268,22 +319,8 @@
     "hot_morale_mod": 0.5,
     "cold_morale_mod": 0.5,
     "squeamish_penalty": 3,
+    "base_hp": 60,
+    "drench_capacity": 3,
     "bionic_slots": 7
-  },
-  {
-    "id": "num_bp",
-    "type": "body_part",
-    "name": "appendix",
-    "accusative": { "ctxt": "bodypart_accusative", "str": "appendix" },
-    "heading": "appendix",
-    "heading_multiple": "Appendices",
-    "encumbrance_text": "It's inflamed.",
-    "main_part": "num_bp",
-    "opposite_part": "num_bp",
-    "hit_size": 0,
-    "hit_size_relative": [ 0, 0, 0 ],
-    "hit_difficulty": 0,
-    "side": "both",
-    "legacy_id": "NUM_BP"
   }
 ]

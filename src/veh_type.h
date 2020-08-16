@@ -2,6 +2,7 @@
 #ifndef CATA_SRC_VEH_TYPE_H
 #define CATA_SRC_VEH_TYPE_H
 
+#include <algorithm>
 #include <array>
 #include <bitset>
 #include <map>
@@ -17,15 +18,14 @@
 #include "optional.h"
 #include "point.h"
 #include "requirements.h"
+#include "string_id.h"
 #include "translations.h"
 #include "type_id.h"
 #include "units.h"
-
-class player;
-
-using itype_id = std::string;
+#include "units_fwd.h"
 
 class JsonObject;
+class player;
 class vehicle;
 
 // bitmask backing store of -certain- vpart_info.flags, ones that
@@ -45,6 +45,7 @@ enum vpart_bitflags : int {
     VPFLAG_OPAQUE,
     VPFLAG_OPENABLE,
     VPFLAG_SEATBELT,
+    VPFLAG_SIMPLE_PART,
     VPFLAG_SPACE_HEATER,
     VPFLAG_COOLER,
     VPFLAG_WHEEL,
@@ -93,10 +94,10 @@ enum vpart_bitflags : int {
  * Other flags are self-explanatory in their names. */
 
 struct vpslot_engine {
-    float backfire_threshold = 0;
+    float backfire_threshold = 0.0f;
     int backfire_freq = 1;
     int muscle_power_factor = 0;
-    float damaged_power_factor = 0;
+    float damaged_power_factor = 0.0f;
     int noise_factor = 0;
     int m2c = 1;
     std::vector<std::string> exclusions;
@@ -210,10 +211,10 @@ class vpart_info
         std::set<emit_id> emissions;
 
         /** Fuel type of engine or tank */
-        itype_id fuel_type = "null";
+        itype_id fuel_type = itype_id::NULL_ID();
 
         /** Default ammo (for turrets) */
-        itype_id default_ammo = "null";
+        itype_id default_ammo = itype_id::NULL_ID();
 
         /** Volume of a foldable part when folded */
         units::volume folded_volume = 0_ml;
@@ -394,7 +395,7 @@ struct vehicle_prototype {
         int with_ammo = 0;
         std::set<itype_id> ammo_types;
         std::pair<int, int> ammo_qty = { -1, -1 };
-        itype_id fuel = "null";
+        itype_id fuel = itype_id::NULL_ID();
     };
 
     vehicle_prototype();

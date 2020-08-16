@@ -10,15 +10,19 @@
 #include <utility>
 #include <vector>
 
+#include "string_id.h"
 #include "translations.h"
 #include "type_id.h"
 
-using itype_id = std::string;
+class butchery_requirements;
 class JsonObject;
+
+using butchery_requirements_id = string_id<butchery_requirements>;
 
 // Could be reused for butchery
 struct harvest_entry {
-    itype_id drop = "null";
+    // drop can be either an itype_id or a group id
+    std::string drop = "null";
     std::pair<float, float> base_num = { 1.0f, 1.0f };
     // This is multiplied by survival and added to the above
     // TODO: Make it a map: skill->scaling
@@ -61,6 +65,10 @@ class harvest_list
             return names_;
         }
 
+        const butchery_requirements &get_butchery_requirements() const {
+            return butchery_requirements_.obj();
+        }
+
         std::string describe( int at_skill = -1 ) const;
 
         std::list<harvest_entry>::const_iterator begin() const;
@@ -88,6 +96,7 @@ class harvest_list
         std::list<harvest_entry> entries_;
         std::set<std::string> names_;
         translation message_;
+        butchery_requirements_id butchery_requirements_;
 
         void finalize();
 };

@@ -1,10 +1,16 @@
+#include "catch/catch.hpp"
+
+#include <algorithm>
+#include <set>
 #include <sstream>
 
-#include "catch/catch.hpp"
 #include "json.h"
 #include "magic.h"
 #include "magic_spell_effect_helpers.h"
 #include "npc.h"
+#include "player_helpers.h"
+#include "point.h"
+#include "type_id.h"
 
 TEST_CASE( "line_attack", "[magic]" )
 {
@@ -31,7 +37,8 @@ TEST_CASE( "line_attack", "[magic]" )
     spell sp( spell_id( "test_line_spell" ) );
 
     // set up Character to test with, only need position
-    npc c;
+    npc &c = spawn_npc( point_zero, "test_talker" );
+    clear_character( c );
     c.setpos( tripoint_zero );
 
     // target point 5 tiles east of zero

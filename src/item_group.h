@@ -3,17 +3,19 @@
 #define CATA_SRC_ITEM_GROUP_H
 
 #include <memory>
-#include <string>
-#include <vector>
-#include <utility>
 #include <set>
+#include <string>
+#include <utility>
+#include <vector>
 
-#include "optional.h"
 #include "item.h"
+#include "optional.h"
+#include "relic.h"
+#include "type_id.h"
+#include "value_ptr.h"
 
 struct itype;
 
-using Item_tag = std::string;
 using Group_tag = std::string;
 class JsonObject;
 class JsonValue;
@@ -56,7 +58,7 @@ ItemList items_from( const Group_tag &group_id );
 /**
  * Check whether a specific item group contains a specific item type.
  */
-bool group_contains_item( const Group_tag &group_id, const Item_tag &type_id );
+bool group_contains_item( const Group_tag &group_id, const itype_id & );
 /**
  * Return every item type that can possibly be spawned by the item group
  */
@@ -106,7 +108,7 @@ class Item_spawn_data
 {
     public:
         using ItemList = std::vector<item>;
-        using RecursionList = std::vector<Item_tag>;
+        using RecursionList = std::vector<std::string>;
 
         Item_spawn_data( int _probability ) : probability( _probability ) { }
         virtual ~Item_spawn_data() = default;
@@ -133,14 +135,32 @@ class Item_spawn_data
          * For item blacklisted, remove the given item from this and
          * all linked groups.
          */
-        virtual bool remove_item( const Item_tag &itemid ) = 0;
-        virtual bool replace_item( const Item_tag &itemid, const Item_tag &replacementid ) = 0;
-        virtual bool has_item( const Item_tag &itemid ) const = 0;
+        virtual bool remove_item( const itype_id &itemid ) = 0;
+        virtual bool replace_item( const itype_id &itemid, const itype_id &replacementid ) = 0;
+        virtual bool has_item( const itype_id &itemid ) const = 0;
+        void set_container_item( const itype_id &container );
 
         virtual std::set<const itype *> every_item() const = 0;
 
         /** probability, used by the parent object. */
         int probability;
+        /**
+         * The group spawns contained in this item
+         */
+        cata::optional<itype_id> container_item;
+        bool sealed = true;
+
+        struct relic_generator {
+            relic_procgen_data::generation_rules rules;
+            relic_procgen_id id;
+
+            relic generate_relic( const itype_id &it_id ) const;
+
+            bool was_loaded = false;
+            void load( const JsonObject &jo );
+        };
+
+        cata::value_ptr<relic_generator> artifact;
 };
 /**
  * Creates a single item, but can change various aspects
@@ -178,6 +198,7 @@ class Item_modifier
          * This is used to create the contents of an item.
          */
         std::unique_ptr<Item_spawn_data> contents;
+        bool sealed = true;
 
         /**
          * Custom flags to be added to the item.
@@ -189,8 +210,8 @@ class Item_modifier
 
         void modify( item &new_item ) const;
         void check_consistency( const std::string &context ) const;
-        bool remove_item( const Item_tag &itemid );
-        bool replace_item( const Item_tag &itemid, const Item_tag &replacementid );
+        bool remove_item( const itype_id &itemid );
+        bool replace_item( const itype_id &itemid, const itype_id &replacementid );
 
         // Currently these always have the same chance as the item group it's part of, but
         // theoretically it could be defined per-item / per-group.
@@ -237,10 +258,10 @@ class Single_item_creator : public Item_spawn_data
         ItemList create( const time_point &birthday, RecursionList &rec ) const override;
         item create_single( const time_point &birthday, RecursionList &rec ) const override;
         void check_consistency( const std::string &context ) const override;
-        bool remove_item( const Item_tag &itemid ) override;
-        bool replace_item( const Item_tag &itemid, const Item_tag &replacementid ) override;
+        bool remove_item( const itype_id &itemid ) override;
+        bool replace_item( const itype_id &itemid, const itype_id &replacementid ) override;
 
-        bool has_item( const Item_tag &itemid ) const override;
+        bool has_item( const itype_id &itemid ) const override;
         std::set<const itype *> every_item() const override;
 };
 
@@ -271,7 +292,7 @@ class Item_group : public Item_spawn_data
          */
         using prop_list = std::vector<std::unique_ptr<Item_spawn_data> >;
 
-        void add_item_entry( const Item_tag &itemid, int probability );
+        void add_item_entry( const itype_id &itemid, int probability );
         void add_group_entry( const Group_tag &groupid, int probability );
         /**
          * Once the relevant data has been read from JSON, this function is always called (either from
@@ -283,9 +304,9 @@ class Item_group : public Item_spawn_data
         ItemList create( const time_point &birthday, RecursionList &rec ) const override;
         item create_single( const time_point &birthday, RecursionList &rec ) const override;
         void check_consistency( const std::string &context ) const override;
-        bool remove_item( const Item_tag &itemid ) override;
-        bool replace_item( const Item_tag &itemid, const Item_tag &replacementid ) override;
-        bool has_item( const Item_tag &itemid ) const override;
+        bool remove_item( const itype_id &itemid ) override;
+        bool replace_item( const itype_id &itemid, const itype_id &replacementid ) override;
+        bool has_item( const itype_id &itemid ) const override;
         std::set<const itype *> every_item() const override;
 
         /**

@@ -11,14 +11,13 @@
 #include "generic_factory.h"
 #include "item.h"
 #include "json.h"
-#include "mapdata.h"
 #include "string_id.h"
 #include "translations.h"
 
 namespace
 {
 
-generic_factory<material_type> material_data( "material", "ident" );
+generic_factory<material_type> material_data( "material" );
 
 } // namespace
 
@@ -74,7 +73,7 @@ void material_type::load( const JsonObject &jsobj, const std::string & )
     optional( jsobj, was_loaded, "freeze_point", _freeze_point );
 
     assign( jsobj, "salvaged_into", _salvaged_into );
-    optional( jsobj, was_loaded, "repaired_with", _repaired_with, "null" );
+    optional( jsobj, was_loaded, "repaired_with", _repaired_with, itype_id::NULL_ID() );
     optional( jsobj, was_loaded, "edible", _edible, false );
     optional( jsobj, was_loaded, "rotting", _rotting, false );
     optional( jsobj, was_loaded, "soft", _soft, false );
@@ -103,13 +102,11 @@ void material_type::load( const JsonObject &jsobj, const std::string & )
         _burn_data.emplace_back( mbd );
     }
 
-    for( JsonArray pair : jsobj.get_array( "burn_products" ) ) {
-        _burn_products.emplace_back( pair.get_string( 0 ), static_cast< float >( pair.get_float( 1 ) ) );
-    }
+    jsobj.read( "burn_products", _burn_products, true );
 
     optional( jsobj, was_loaded, "compact_accepts", _compact_accepts,
               auto_flags_reader<material_id>() );
-    optional( jsobj, was_loaded, "compacts_into", _compacts_into, string_reader() );
+    optional( jsobj, was_loaded, "compacts_into", _compacts_into, auto_flags_reader<itype_id>() );
 }
 
 void material_type::check() const
@@ -120,18 +117,18 @@ void material_type::check() const
     if( _dmg_adj.size() < 4 ) {
         debugmsg( "material %s specifies insufficient damaged adjectives.", id.c_str() );
     }
-    if( _salvaged_into && ( !item::type_is_defined( *_salvaged_into ) || *_salvaged_into == "null" ) ) {
+    if( _salvaged_into && ( !item::type_is_defined( *_salvaged_into ) || _salvaged_into->is_null() ) ) {
         debugmsg( "invalid \"salvaged_into\" %s for %s.", _salvaged_into->c_str(), id.c_str() );
     }
     if( !item::type_is_defined( _repaired_with ) ) {
         debugmsg( "invalid \"repaired_with\" %s for %s.", _repaired_with.c_str(), id.c_str() );
     }
-    for( auto &ca : _compact_accepts ) {
+    for( const material_id &ca : _compact_accepts ) {
         if( !ca.is_valid() ) {
             debugmsg( "invalid \"compact_accepts\" %s for %s.", ca.c_str(), id.c_str() );
         }
     }
-    for( auto &ci : _compacts_into ) {
+    for( const itype_id &ci : _compacts_into ) {
         if( !item::type_is_defined( ci ) || !item( ci, 0 ).only_made_of( std::set<material_id> { id } ) ) {
             debugmsg( "invalid \"compacts_into\" %s for %s.", ci.c_str(), id.c_str() );
         }

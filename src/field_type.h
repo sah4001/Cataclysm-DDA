@@ -18,15 +18,14 @@
 #include "color.h"
 #include "effect.h"
 #include "enums.h"
+#include "int_id.h"
 #include "mapdata.h"
+#include "string_id.h"
 #include "translations.h"
 #include "type_id.h"
 
 class JsonObject;
 template <typename E> struct enum_traits;
-
-enum phase_id : int;
-enum body_part : int;
 
 enum class description_affix : int {
     DESCRIPTION_AFFIX_IN,
@@ -65,7 +64,7 @@ struct field_effect {
     time_duration min_duration = 0_seconds;
     time_duration max_duration = 0_seconds;
     int intensity = 0;
-    body_part bp = num_bp;
+    bodypart_str_id bp;
     bool is_environmental = true;
     bool immune_in_vehicle  = false;
     bool immune_inside_vehicle  = false;
@@ -109,6 +108,7 @@ struct field_intensity_level {
     int monster_spawn_radius = 0;
     mongroup_id monster_spawn_group;
     float light_emitted = 0.0f;
+    float local_light_override = -1.0f;
     float translucency = 0.0f;
     int convection_temperature_mod = 0;
     int scent_neutralization = 0;
@@ -153,17 +153,20 @@ struct field_type {
         std::tuple<int, std::string, time_duration, std::string> npc_complain_data;
 
         std::vector<trait_id> immunity_data_traits;
-        std::vector<std::pair<body_part, int>> immunity_data_body_part_env_resistance;
+        std::vector<std::pair<bodypart_str_id, int>> immunity_data_body_part_env_resistance;
         std::set<mtype_id> immune_mtypes;
 
         int priority = 0;
         time_duration half_life = 0_turns;
-        phase_id phase = PNULL;
+        phase_id phase = phase_id::PNULL;
         bool accelerated_decay = false;
         bool display_items = true;
         bool display_field = false;
+        bool legacy_make_rubble = false;
         field_type_id wandering_field;
         std::string looks_like;
+
+        bool decrease_intensity_on_contact = false;
 
     public:
         const field_intensity_level &get_intensity_level( int level = 0 ) const;
@@ -224,6 +227,9 @@ struct field_type {
         float get_light_emitted( int level = 0 ) const {
             return get_intensity_level( level ).light_emitted;
         }
+        float get_local_light_override( int level = 0 )const {
+            return get_intensity_level( level ).local_light_override;
+        }
         float get_translucency( int level = 0 ) const {
             return get_intensity_level( level ).translucency;
         }
@@ -267,6 +273,7 @@ field_type get_field_type_by_legacy_enum( int legacy_enum_id );
 extern field_type_id fd_null,
        fd_blood,
        fd_bile,
+       fd_extinguisher,
        fd_gibs_flesh,
        fd_gibs_veggy,
        fd_web,
@@ -275,7 +282,6 @@ extern field_type_id fd_null,
        fd_sap,
        fd_sludge,
        fd_fire,
-       fd_rubble,
        fd_smoke,
        fd_toxic_gas,
        fd_tear_gas,
@@ -290,17 +296,12 @@ extern field_type_id fd_null,
        fd_acid_vent,
        fd_plasma,
        fd_laser,
-       fd_spotlight,
        fd_dazzling,
        fd_blood_veggy,
        fd_blood_insect,
        fd_blood_invertebrate,
        fd_gibs_insect,
        fd_gibs_invertebrate,
-       fd_cigsmoke,
-       fd_weedsmoke,
-       fd_cracksmoke,
-       fd_methsmoke,
        fd_bees,
        fd_incendiary,
        fd_relax_gas,

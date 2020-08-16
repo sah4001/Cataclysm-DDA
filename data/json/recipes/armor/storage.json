@@ -346,7 +346,7 @@
     "time": "36 s",
     "reversible": true,
     "autolearn": true,
-    "components": [ [ [ "raw_leather", 6 ], [ "raw_hleather", 6 ], [ "raw_fur", 6 ], [ "raw_hfur", 6 ] ] ],
+    "components": [ [ [ "raw_leather", 6 ], [ "raw_hleather", 6 ], [ "raw_demihumanleather", 6 ], [ "raw_fur", 6 ], [ "raw_hfur", 6 ] ] ],
     "flags": [ "BLIND_EASY" ]
   },
   {
@@ -795,17 +795,7 @@
       [ [ "rag", 6 ] ],
       [ [ "leather", 6 ], [ "tanned_hide", 1 ] ],
       [ [ "holster", 1 ], [ "sholster", 1 ] ],
-      [
-        [ "tacvest", 1 ],
-        [ "legrig", 1 ],
-        [ "vest", 1 ],
-        [ "tool_belt", 1 ],
-        [ "ragpouch", 4 ],
-        [ "leather_pouch", 2 ],
-        [ "dump_pouch", 1 ],
-        [ "purse", 2 ],
-        [ "fanny", 2 ]
-      ],
+      [ [ "leather_pouch", 3 ] ],
       [ [ "duct_tape", 50 ] ]
     ]
   },
